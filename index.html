@@ -1,0 +1,760 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>myLUAS | Live Dublin Tram Times</title>
+
+  <style>
+    :root {
+      --bg: #101827;
+      --card: #1c293b;
+      --text: #f5f7fb;
+      --muted: #a9b8cb;
+      --red: #ff6474;
+      --green: #45d6a0;
+      --border: #354458;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system,
+                   "Segoe UI", sans-serif;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+      padding: 24px 16px;
+    }
+
+    header {
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      font-size: 2.6rem;
+      font-weight: 850;
+      letter-spacing: -2px;
+    }
+
+    .logo span {
+      color: var(--green);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: 650;
+      margin-bottom: 10px;
+    }
+
+    select {
+      width: 100%;
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #101827;
+      color: white;
+      font: inherit;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    select:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--green);
+      outline-offset: 3px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    button {
+      border: 0;
+      background: var(--green);
+      color: #101827;
+      border-radius: 10px;
+      padding: 11px 18px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    .line-badge {
+      display: inline-block;
+      border-radius: 30px;
+      padding: 5px 12px;
+      font-size: 0.8rem;
+      font-weight: 750;
+      margin-bottom: 10px;
+    }
+
+    .line-red {
+      background: rgba(255, 100, 116, 0.15);
+      color: var(--red);
+    }
+
+    .line-green {
+      background: rgba(69, 214, 160, 0.15);
+      color: var(--green);
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 18px;
+    }
+
+    .direction-card {
+      border-left: 5px solid var(--green);
+    }
+
+    .direction-card.red {
+      border-left-color: var(--red);
+    }
+
+    .tram {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tram:last-child {
+      border-bottom: none;
+    }
+
+    .destination {
+      font-size: 1.05rem;
+      font-weight: 650;
+      overflow-wrap: anywhere;
+    }
+
+    .tram-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .arrival {
+      text-align: right;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .minutes {
+      font-size: 2.3rem;
+      font-weight: 850;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .minutes.due {
+      font-size: 1.7rem;
+      color: var(--green);
+    }
+
+    .unit {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 5px;
+    }
+
+    .message {
+      color: var(--muted);
+      margin-bottom: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      background: #4b202d;
+      color: #ffdce1;
+      border: 1px solid var(--red);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+      overflow-wrap: anywhere;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    @media (min-width: 650px) {
+      .container {
+        padding: 40px 24px;
+      }
+
+      #directions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+      }
+
+      .direction-card {
+        margin-bottom: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+
+    <header>
+      <div class="logo">my<span>LUAS</span></div>
+      <p class="subtitle">
+        Dublin tram arrivals, made simple.
+      </p>
+    </header>
+
+    <section class="card">
+      <label for="stopSelect">Choose your Luas stop</label>
+
+      <select id="stopSelect">
+        <option value="MYS">Loading stops...</option>
+      </select>
+
+      <div class="status-row">
+        <div class="status" role="status">
+          <div id="loadingStatus">Connecting...</div>
+          <div id="lastUpdated">Last updated: --</div>
+        </div>
+
+        <button id="refreshBtn" type="button">
+          Refresh ↻
+        </button>
+      </div>
+    </section>
+
+    <div id="errorBox"
+         class="error hidden"
+         role="alert"></div>
+
+    <section class="card">
+      <div id="lineBadge" class="line-badge line-red">
+        LUAS
+      </div>
+
+      <h1 id="stopTitle">Loading stop...</h1>
+
+      <p class="subtitle">
+        Next live tram arrivals
+      </p>
+    </section>
+
+    <div id="directions" aria-live="polite"></div>
+
+    <section class="card">
+      <h2>Service updates</h2>
+      <p id="serviceMessage" class="message">
+        Checking Luas service information...
+      </p>
+    </section>
+
+    <footer>
+      Data: Transport Infrastructure Ireland.
+      Built by Ingrid Cisneiro Facchim for BDAIB.
+      <p>Automatically refreshes every 20 seconds.</p>
+    </footer>
+
+  </main>
+
+  <script>
+    "use strict";
+
+    // ----------------------------------------
+    // Configuration
+    // ----------------------------------------
+
+    const API_BASE = "https://luas-class.kluxy.app";
+    const DEFAULT_STOP = "MYS";
+    const STORAGE_KEY = "myLUAS_selectedStop";
+    const REFRESH_INTERVAL = 20000;
+
+    // ----------------------------------------
+    // Page elements
+    // ----------------------------------------
+
+    const stopSelect = document.getElementById("stopSelect");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const loadingStatus = document.getElementById("loadingStatus");
+    const lastUpdated = document.getElementById("lastUpdated");
+    const errorBox = document.getElementById("errorBox");
+    const stopTitle = document.getElementById("stopTitle");
+    const lineBadge = document.getElementById("lineBadge");
+    const directionsBox = document.getElementById("directions");
+    const serviceMessage = document.getElementById("serviceMessage");
+
+    let stops = [];
+    let selectedStop = DEFAULT_STOP;
+    let requestNumber = 0;
+    let activeController = null;
+
+    // ----------------------------------------
+    // Local storage helpers
+    // ----------------------------------------
+
+    function getSavedStop() {
+      try {
+        return localStorage.getItem(STORAGE_KEY) || DEFAULT_STOP;
+      } catch (error) {
+        showError("Could not read saved stop: " + error.message);
+        return DEFAULT_STOP;
+      }
+    }
+
+    function saveStop(id) {
+      try {
+        localStorage.setItem(STORAGE_KEY, id);
+      } catch (error) {
+        showError("Could not save stop: " + error.message);
+      }
+    }
+
+    // ----------------------------------------
+    // Error display
+    // ----------------------------------------
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.remove("hidden");
+    }
+
+    function clearError() {
+      errorBox.textContent = "";
+      errorBox.classList.add("hidden");
+    }
+
+    // ----------------------------------------
+    // Fetch JSON with error handling
+    // ----------------------------------------
+
+    async function fetchJSON(url, signal) {
+      const response = await fetch(url, {
+        cache: "no-store",
+        signal
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          "Server returned HTTP " +
+          response.status +
+          " " +
+          response.statusText
+        );
+      }
+
+      return response.json();
+    }
+
+    // ----------------------------------------
+    // Load and group Luas stops
+    // ----------------------------------------
+
+    async function loadStops() {
+      loadingStatus.textContent = "Loading stops...";
+
+      try {
+        const data = await fetchJSON(API_BASE + "/stops");
+
+        if (!data || !Array.isArray(data.stops)) {
+          throw new Error("Invalid stop list received.");
+        }
+
+        stops = data.stops;
+
+        const savedStop = getSavedStop();
+
+        const validSavedStop = stops.some(
+          stop => stop.id === savedStop
+        );
+
+        selectedStop = validSavedStop
+          ? savedStop
+          : DEFAULT_STOP;
+
+        stopSelect.innerHTML = "";
+
+        const lines = [
+          { key: "red", label: "Red Line" },
+          { key: "green", label: "Green Line" }
+        ];
+
+        for (const line of lines) {
+          const group = document.createElement("optgroup");
+          group.label = line.label;
+
+          const lineStops = stops
+            .filter(stop => stop.line === line.key)
+            .sort((a, b) =>
+              a.name.localeCompare(b.name)
+            );
+
+          for (const stop of lineStops) {
+            const option = document.createElement("option");
+            option.value = stop.id;
+            option.textContent = stop.name;
+            group.appendChild(option);
+          }
+
+          stopSelect.appendChild(group);
+        }
+
+        if (!stops.some(stop => stop.id === selectedStop)) {
+          selectedStop = stops[0]?.id || DEFAULT_STOP;
+        }
+
+        stopSelect.value = selectedStop;
+
+        updateStopHeader();
+
+      } catch (error) {
+        showError("Unable to load Luas stops: " + error.message);
+
+        // Allow the default stop to work even if
+        // the stop-list endpoint is unavailable.
+        stopSelect.innerHTML = "";
+
+        const option = document.createElement("option");
+        option.value = DEFAULT_STOP;
+        option.textContent = "MYS (default stop)";
+        stopSelect.appendChild(option);
+
+        selectedStop = DEFAULT_STOP;
+        stopSelect.value = selectedStop;
+        updateStopHeader();
+      }
+    }
+
+    // ----------------------------------------
+    // Stop heading and line colours
+    // ----------------------------------------
+
+    function updateStopHeader() {
+      const stop = stops.find(
+        item => item.id === selectedStop
+      );
+
+      stopTitle.textContent = stop
+        ? stop.name
+        : selectedStop;
+
+      const line = stop?.line || "red";
+
+      lineBadge.textContent =
+        line === "green" ? "GREEN LINE" : "RED LINE";
+
+      lineBadge.className =
+        "line-badge line-" + line;
+    }
+
+    // ----------------------------------------
+    // Build a single tram row
+    // ----------------------------------------
+
+    function createTramRow(tram) {
+      const row = document.createElement("div");
+      row.className = "tram";
+
+      const destinationBox = document.createElement("div");
+
+      const destination = document.createElement("div");
+      destination.className = "destination";
+      destination.textContent =
+        tram.destination || "Destination unavailable";
+
+      const tramLabel = document.createElement("div");
+      tramLabel.className = "tram-label";
+      tramLabel.textContent = "Next tram";
+
+      destinationBox.append(destination, tramLabel);
+
+      const arrival = document.createElement("div");
+      arrival.className = "arrival";
+
+      const minutes = document.createElement("div");
+      minutes.className = "minutes";
+
+      const unit = document.createElement("div");
+      unit.className = "unit";
+
+      const due = Number(tram.due);
+
+      if (tram.due !== null &&
+          tram.due !== "" &&
+          Number.isFinite(due) &&
+          due >= 0) {
+
+        if (due === 0) {
+          minutes.textContent = "Due";
+          minutes.classList.add("due");
+          unit.textContent = "now";
+        } else {
+          minutes.textContent = String(due);
+          unit.textContent = due === 1 ? "min" : "mins";
+        }
+
+      } else {
+        minutes.textContent = "--";
+        unit.textContent = "unavailable";
+      }
+
+      arrival.append(minutes, unit);
+      row.append(destinationBox, arrival);
+
+      return row;
+    }
+
+    // ----------------------------------------
+    // Display both tram directions
+    // ----------------------------------------
+
+    function renderDirections(directions) {
+      directionsBox.replaceChildren();
+
+      if (!Array.isArray(directions)) {
+        throw new Error("Invalid direction data received.");
+      }
+
+      if (directions.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "card empty";
+        empty.textContent =
+          "No tram directions currently available.";
+        directionsBox.appendChild(empty);
+        return;
+      }
+
+      const stop = stops.find(
+        item => item.id === selectedStop
+      );
+
+      const line = stop?.line || "red";
+
+      for (const direction of directions) {
+        const card = document.createElement("section");
+
+        card.className =
+          "card direction-card" +
+          (line === "red" ? " red" : "");
+
+        const heading = document.createElement("h2");
+        heading.textContent =
+          direction.name || "Direction unavailable";
+
+        card.appendChild(heading);
+
+        const trams = Array.isArray(direction.trams)
+          ? direction.trams.slice(0, 3)
+          : [];
+
+        if (trams.length === 0) {
+          const empty = document.createElement("p");
+          empty.className = "empty";
+          empty.textContent =
+            "No upcoming trams available.";
+          card.appendChild(empty);
+        } else {
+          for (const tram of trams) {
+            card.appendChild(createTramRow(tram));
+          }
+        }
+
+        directionsBox.appendChild(card);
+      }
+    }
+
+    // ----------------------------------------
+    // Fetch live arrivals
+    // ----------------------------------------
+
+    async function loadForecast() {
+      const thisRequest = ++requestNumber;
+
+      // Cancel the previous request so that
+      // an old stop cannot overwrite a new one.
+      if (activeController) {
+        activeController.abort();
+      }
+
+      const controller = new AbortController();
+      activeController = controller;
+
+      const stopForRequest = selectedStop;
+
+      loadingStatus.textContent = "Updating live times...";
+      refreshBtn.disabled = true;
+
+      try {
+        const url =
+          API_BASE +
+          "/forecast?stop=" +
+          encodeURIComponent(stopForRequest);
+
+        const data = await fetchJSON(url, controller.signal);
+
+        if (thisRequest !== requestNumber) return;
+
+        if (!data ||
+            !Array.isArray(data.directions)) {
+          throw new Error("Invalid forecast data received.");
+        }
+
+        clearError();
+
+        const stop = stops.find(
+          item => item.id === stopForRequest
+        );
+
+        stopTitle.textContent =
+          data.stopName || stop?.name || stopForRequest;
+
+        renderDirections(data.directions);
+
+        serviceMessage.textContent =
+          data.message || "No service messages reported.";
+
+        const now = new Date();
+
+        lastUpdated.textContent =
+          "Last updated: " +
+          now.toLocaleTimeString("en-IE", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+          });
+
+        loadingStatus.textContent = "● Live arrivals";
+
+      } catch (error) {
+        if (thisRequest !== requestNumber) return;
+
+        if (error.name === "AbortError") return;
+
+        showError(
+          "Unable to update live tram times: " +
+          error.message
+        );
+
+        loadingStatus.textContent = "Update failed";
+
+        if (!directionsBox.hasChildNodes()) {
+          serviceMessage.textContent =
+            "Service information unavailable.";
+        }
+
+      } finally {
+        if (thisRequest === requestNumber) {
+          refreshBtn.disabled = false;
+          activeController = null;
+        }
+      }
+    }
+
+    // ----------------------------------------
+    // User interactions
+    // ----------------------------------------
+
+    stopSelect.addEventListener("change", () => {
+      selectedStop = stopSelect.value;
+
+      saveStop(selectedStop);
+      updateStopHeader();
+
+      // Clear the old stop's forecast immediately.
+      directionsBox.replaceChildren();
+      serviceMessage.textContent =
+        "Checking service information...";
+      lastUpdated.textContent = "Last updated: --";
+
+      loadForecast();
+    });
+
+    refreshBtn.addEventListener("click", () => {
+      loadForecast();
+    });
+
+    // ----------------------------------------
+    // Start app
+    // ----------------------------------------
+
+    async function init() {
+      await loadStops();
+      await loadForecast();
+
+      // Refresh automatically every 20 seconds.
+      setInterval(() => {
+        loadForecast();
+      }, REFRESH_INTERVAL);
+    }
+
+    init();
+  </script>
+</body>
+</html>
